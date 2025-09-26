@@ -24,10 +24,25 @@
   }
 
   // ==== 参照 ====
-  let screens, overlay, timerEl, romajiLine, jpSentence, feedback;
+  let screens, overlay, timerEl, romajiLine, jpSentence;
   let resultAccuracyEl, resultTimeEl, bestAccEl, bestTimeEl;
   let resultTitleEl;
   let restartNote;
+  let typingEffectsLayer;
+  let yakiimoImg;
+  let typingEffectSeq = 0;        // 連番（ディレイ用）
+
+  // ★炎あたりの原点を計算
+  function getEffectOrigin() {
+    const layerBox = typingEffectsLayer?.getBoundingClientRect();
+    const imgBox = yakiimoImg?.getBoundingClientRect();
+    if (!layerBox || !imgBox) {
+      return { left: '50%', top: '8px' }; // フォールバック（レイヤ上部中央）
+    }
+    const leftPx = (imgBox.left + imgBox.width / 2) - layerBox.left;   // 画像中央X
+    const topPx = (imgBox.top + imgBox.height * 0.28) - layerBox.top; // 炎っぽい高さ(28%) ※お好みで微調整
+    return { left: leftPx, top: topPx };
+  }
 
   // ==== 状態 ====
   const state = {
@@ -88,9 +103,13 @@
     // オーバーレイ表示（スペースで開始に戻す）
     if (overlay) {
       overlay.hidden = false;
-      const sub = overlay.querySelector('.start-overlay__sub'); // ★ 追加
+      const sub = overlay.querySelector('.start-overlay__sub');  // ★ 追加
       if (sub) sub.style.display = 'none';                       // ★ 非表示に
     }
+
+    // リセット時に演出を消す（残骸防止）
+    if (typingEffectsLayer) typingEffectsLayer.innerHTML = '';
+    typingEffectSeq = 0;
 
     // タイマー停止（動いていたら念のため止める）
     if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
@@ -99,7 +118,8 @@
     if (timerEl) timerEl.textContent = '0.0';
     if (romajiLine) romajiLine.textContent = '';
     if (jpSentence) jpSentence.textContent = '';
-    if (feedback) { feedback.textContent = ''; feedback.className = 'feedback'; }
+    if (typingEffectsLayer) typingEffectsLayer.innerHTML = '';
+    typingEffectSeq = 0;
 
     // ゲーム状態リセット
     state.q = null;
@@ -139,8 +159,6 @@
   // UI 更新
   buildRomajiLine(chunks ?? displayRomaji);
   jpSentence.textContent = state.q.jp;
-  feedback.textContent = '';
-  feedback.className = 'feedback';
 }
 
   // ==== 開始 ====
@@ -213,13 +231,14 @@
     timerEl = document.getElementById('timer');
     romajiLine = document.getElementById('romaji-line');
     jpSentence = document.getElementById('jp-sentence');
-    feedback = document.getElementById('feedback');
     resultAccuracyEl = document.getElementById('result-accuracy');
     resultTimeEl = document.getElementById('result-time');
     resultTitleEl = document.querySelector('.result-header h2');
     bestAccEl = document.getElementById('best-accuracy');
     bestTimeEl = document.getElementById('best-time');
     restartNote = document.querySelector('.restart-note');
+    typingEffectsLayer = document.getElementById('typing-effects');
+    yakiimoImg = document.querySelector('#yakiimo-illustration img');
 
     // クリックで画面遷移
     document.addEventListener('click', (ev) => {
@@ -264,6 +283,26 @@
       resultScreen.style.setProperty('--mode-color', '#DCAA5B');
     }
   });
+
+  // ★ 生成関数
+  function spawnTypingEffect(kind /* 'success' | 'miss' */) {
+    if (!typingEffectsLayer) return;
+
+    const el = document.createElement('div');
+    el.className = 'typing-effect ' + (kind === 'success' ? 'typing-effect--success' : 'typing-effect--miss');
+    el.textContent = (kind === 'success') ? '🔥' : '💧';
+
+    const { left, top } = getEffectOrigin();
+    el.style.left = (typeof left === 'number') ? `${left}px` : left;
+    el.style.top  = (typeof top === 'number') ? `${top}px` : top;
+    // 連打で少しだけディレイをずらして重なりを軽減
+    const delay = (typingEffectSeq % 5) * 60; // ms
+    typingEffectSeq++;
+    el.style.animationDelay = `${delay}ms`;
+
+    typingEffectsLayer.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
   
   function abortToReady() {
     // 中断: 保存はしない（finishGame を呼ばない）
@@ -579,13 +618,13 @@
     const spans = romajiLine.children;
     const i = Math.min(state.pointer, spans.length - 1);
     if (spans[i]) spans[i].classList.add('ng');
-    if (feedback) { feedback.textContent = '💧 水がかかった...'; feedback.className = 'feedback error'; }
+    spawnTypingEffect('miss');
   }
   function showHit() {
-    if (feedback) { feedback.textContent = '🔥 火が強くなった！'; feedback.className = 'feedback success'; }
+    spawnTypingEffect('success');
   }
   function markNeutralHit() { // 促音途中のポジティブ演出
-    if (feedback) { feedback.textContent = '🔥 火が強くなった！'; feedback.className = 'feedback success'; }
+    spawnTypingEffect('success');
   }
 
   // ==== 終了・結果 ====

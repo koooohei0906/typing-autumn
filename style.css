@@ -290,10 +290,68 @@ body {
   position: relative;
   border-radius: var(--card-radius-lg);
   padding: 1.8rem 1.5rem 2.2rem;
-  min-height: 20rem;
-  /* TSX: bg-white/50 + blur + border with mode color 20% */
+  min-height: 20rem;     /* TSX: bg-white/50 + blur + border with mode color 20% */
   background: rgba(255, 255, 255, 0.50);
   backdrop-filter: blur(4px);
+}
+
+/* エフェクト用レイヤ */
+#typing-effects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* タイピング演出レイヤー */
+.typing-effects-layer {
+  position: absolute;
+  inset: 0;              /* 親(board)全面 */
+  pointer-events: none;  /* クリック等を妨げない */
+  overflow: visible;
+}
+
+/* 1つの演出アイコン（🔥/💧） */
+.typing-effect {
+  position: absolute;
+
+  /* ← JSで left/top を都度セットします。初期値はフォールバック用 */
+  left: 50%;
+  top: 8px;
+
+  /* 原点（left/top）を中央基準にする */
+  transform: translate(-50%, -50%);
+
+  font-size: 28px;                 /* Reactの text-2xl 相当 */
+  animation: typing-effect 0.9s ease-out forwards;
+  will-change: transform, opacity;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+  opacity: 0;                      /* 遅延があるので初期は0 */
+}
+
+/* 成功/ミスで微妙に大きさを変えたい場合（任意） */
+.typing-effect--success {
+  font-size: 30px;
+}
+
+.typing-effect--miss {
+  font-size: 26px;
+}
+
+/* ふわっと上に浮かびながら消える */
+@keyframes typing-effect {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translateY(-18px) scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-36px) scale(0.9);
+  }
 }
 
 /* ローマ字（上段：淡いグレー、成功は薄灰、失敗は赤） */
@@ -345,27 +403,6 @@ display: inline-block;
   border: 1px solid rgba(220, 170, 91, 0.20);
   border-radius: 14px;
   max-width: 880px;
-}
-
-/* 成否フィードバック（🔥/💧） */
-.feedback {
-  text-align: center;
-  min-height: 1.4rem;
-  font-weight: 800;
-  color: #7C6A4A;
-  margin: .4rem 0 .9rem;
-}
-
-.feedback.success {
-  color: #B07A00;
-}
-
-.feedback.error {
-  color: var(--c-ng);
-  background: var(--c-ng-bg);
-  border-radius: 10px;
-  display: inline-block;
-  padding: .1rem .5rem;
 }
 
 /* 焼き芋イラスト置き場（中央下） */
