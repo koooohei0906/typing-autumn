@@ -319,6 +319,11 @@ body {
   color: var(--c-ng);
 }
 
+/* かたまりの末尾文字に入れる見た目のスペース */
+.romaji-line .wb {
+  margin-right: 0.8ch;
+}
+
 /* 日本語問題文（大きく・中央） */
 .jp-sentence {
   text-align: center;
