@@ -294,7 +294,6 @@ body {
   /* TSX: bg-white/50 + blur + border with mode color 20% */
   background: rgba(255, 255, 255, 0.50);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(220, 170, 91, 0.20);
 }
 
 /* ローマ字（上段：淡いグレー、成功は薄灰、失敗は赤） */
@@ -372,9 +371,22 @@ display: inline-block;
 /* 焼き芋イラスト置き場（中央下） */
 .yakiimo-illustration {
   text-align: center;
-  font-size: 36px;
-  opacity: .9;
   margin-top: .6rem;
+  display: grid;
+  place-items: center;
+}
+
+/* 画像の見た目（Figmaのfilterを再現） */
+.yakiimo-illustration img {
+  width: clamp(140px, 18vw, 220px);
+  /* w-40相当をレスポンシブに */
+  height: auto;
+  margin: 0 auto;
+  filter: contrast(.8) saturate(.7) brightness(.95);
+  opacity: .9;
+  transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Start Overlay（スペースキーで開始） */
@@ -404,13 +416,51 @@ display: inline-block;
   font-weight: 600;
 }
 
+/* スタートオーバーレイが表示中は焼き芋画像を非表示に */
+.screen--game #start-overlay:not([hidden])~.game-board .yakiimo-illustration {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.screen--game .restart-note {
+  position: absolute;
+    bottom: 12px;
+    right: 14px;
+    font-size: .875rem;
+    color: #6B7280;
+    opacity: .85;
+    letter-spacing: .01em;
+    z-index: 11;
+    pointer-events: none;
+}
+
+/* 小さなキーキャップ風の見た目（任意） */
+.screen--game .restart-hint kbd,
+.screen--game .restart-note kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: .85em;
+  border: 1px solid rgba(0,0,0,.15);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: .05em .4em;
+  background: #fff;
+  color: #374151;
+  box-shadow: 0 1px 0 rgba(0,0,0,.05);
+}
+
 /* ---- Result Screen ---- */
+/* 見出し(h2)をヘッダー内で中央に配置 */
+.screen--result .result-header {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* 任意：縦位置も揃える */
+}
+
 .screen--result .result-header h2 {
   margin: 0 0 1.4rem;
   font-size: 1.5rem;
   font-weight: 900;
-  color: var(--c-gold);
-  text-align: center;
+  color: var(--mode-color);
   display: inline-flex;
   align-items: center;
   gap: .65rem;
@@ -422,7 +472,7 @@ display: inline-block;
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--c-gold);
+  background: var(--mode-color);
   color: #fff;
   display: inline-grid;
   place-items: center;
@@ -437,20 +487,17 @@ display: inline-block;
   row-gap: 1rem;
   justify-items: center;
   align-items: end;
-
-  border: 2px solid rgba(220, 170, 91, .25);
-  background: rgba(220, 170, 91, .10);
-  border-radius: var(--card-radius-lg);
   padding: 1.25rem 1.35rem;
 }
 
 /* 2カラム内の各ブロック（縦にラベル→数値） */
 .result-row {
-  margin: 0;
+  margin: .25rem 0 .9rem;
+  padding: 4px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .4rem;
+  gap: .5rem;
 }
 
 .result-row--hito {
@@ -464,37 +511,45 @@ display: inline-block;
 }
 
 /* ラベルをチップ風に */
-.result-label {
-  width: auto;
-  color: var(--c-gold);
-  font-weight: 800;
-  border: 2px solid rgba(220,170,91,.5);
-  border-radius: 999px;
-  padding: .15rem .6rem;
+.result-label,
+.result-title-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #fff;
+  color: var(--mode-color);
+  border: 2px solid var(--mode-color);
+  border-radius: 8px;      /* ← 角丸8px */
+  padding: .25rem .75rem;  /* ← py-1 / px-3 相当 */
+  font-weight: 500;        /* ← 太文字ではなく medium */
+  font-size: .875rem;      /* ← text-sm 相当 */
+  line-height: 1.2;
+  letter-spacing: .01em;
 }
 
 /* 数値の見た目（左：%を大きく／右：秒も大きく） */
 #result-accuracy {
   font-weight: 900;
-  font-size: 2.75rem;
+  font-size: 2.25rem;
   /* 例: 92% */
-  color: var(--c-gold);
+  color: var(--mode-color);
   line-height: 1;
 }
 
 #result-time {
   font-weight: 900;
-  font-size: 2.1rem;
+  font-size: 1.875rem;
   /* 例: 23.0秒 */
-  color: var(--c-gold);
+  color: var(--mode-color);
   line-height: 1;
 }
 
 .result-comment {
   margin: 0;
-  color: var(--c-gold);
-  font-weight: 800;
+    color: var(--mode-color);
+    font-weight: 400;     /* ← 太字ではなく通常 */
+    font-size: 1.125rem;  /* ← text-lg 相当 */
+    line-height: 1.6;
 }
 
 /* ボタン：左右に「もう一度遊ぶ」「トップへ戻る」 */
@@ -510,6 +565,9 @@ display: inline-block;
   padding: 1rem 1.2rem;
   border-radius: 12px;
   font-weight: 800;
+}
+.screen--result{
+  max-height: 88vh;      /* 画面からはみ出し過ぎない安全策（任意） */
 }
 
 /* 共有ボタン：その下で横幅いっぱい */

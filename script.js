@@ -26,6 +26,8 @@
   // ==== 参照 ====
   let screens, overlay, timerEl, romajiLine, jpSentence, feedback;
   let resultAccuracyEl, resultTimeEl, bestAccEl, bestTimeEl;
+  let resultTitleEl;
+  let restartNote;
 
   // ==== 状態 ====
   const state = {
@@ -50,6 +52,27 @@
     ji2diStage: 0, ji2diPtr: -1,   // target: 'ji' を 'd' 'i' で入力
   };
 
+  function setRestartNote(html) {
+    if (restartNote) restartNote.innerHTML = html; // <kbd> を使うので innerHTML
+  }
+
+  function updateRestartNote() {
+    if (!restartNote) return;
+    if (state.phase === 'ready') {
+      setRestartNote('<kbd>Esc</kbd>キーでトップへ');
+    } else if (state.phase === 'playing') {
+      setRestartNote('<kbd>Esc</kbd>キーでリスタート');
+    } else {
+      setRestartNote(''); // home/result では文言消し
+    }
+  }
+
+  function updateRestartNoteVisibility() {
+    if (!restartNote) return;
+    const onGame = screens?.game && !screens.game.hidden;
+    restartNote.style.display = onGame ? '' : 'none';
+  }
+
   // ==== 画面遷移 ====
   function showScreen(name) {
     Object.values(screens).forEach(sec => { if (sec) sec.hidden = true; });
@@ -57,6 +80,8 @@
     if (target) target.hidden = false;
     state.phase = (name === 'game') ? 'ready' : (name === 'result' ? 'finished' : 'home');
     if (name === 'game') resetGameView();
+    updateRestartNote();
+    updateRestartNoteVisibility();
   }
 
   function resetGameView() {
@@ -129,6 +154,7 @@
 
     overlay.hidden = true;
     state.phase = 'playing';
+    updateRestartNote();
 
     state.questionIndex = 0;           // ★ 1問目
     loadQuestionByIndex(state.questionIndex);
@@ -160,10 +186,11 @@
 
   // ==== 結果タイトル＆ひとこと ====
   function hitoKotoText(acc) {
-    if (acc === 100) return '完璧！焼き芋職人です！🔥';
-    if (acc >= 90) return '美味しそう！あと少しで完璧🍠';
-    if (acc >= 80) return 'なかなかの腕前です！✨';
-    return 'まだ生っぽい…もう一回いこう！';
+    if (acc >= 95) return '完璧な仕上がりです！🍠';
+    if (acc >= 90) return '職人級の腕前です！🔥';
+    if (acc >= 80) return 'なかなかの腕前です！🌟';
+    if (acc >= 70) return 'もう少しで上達です！💫';
+    return '練習あるのみです！🌱';
   }
 
   function updateResultHeaderAndHitoKoto(accuracy) {
@@ -173,8 +200,6 @@
     const commentEl = document.getElementById('result-comment');
     if (commentEl) commentEl.textContent = hitoKotoText(accuracy);
   }
-
-  let resultTitleEl;
 
   // ==== 入力 ====
   document.addEventListener('DOMContentLoaded', () => {
@@ -194,6 +219,7 @@
     resultTitleEl = document.querySelector('.result-header h2');
     bestAccEl = document.getElementById('best-accuracy');
     bestTimeEl = document.getElementById('best-time');
+    restartNote = document.querySelector('.restart-note');
 
     // クリックで画面遷移
     document.addEventListener('click', (ev) => {
@@ -224,12 +250,26 @@
     const timeRow = resultTimeEl?.closest('.result-row');
     const timeLbl = timeRow?.querySelector('.result-label');
     if (timeLbl) timeLbl.textContent = '焼き上がりにかかった時間';
+
+    // 初回の文言を決定（phase='home' なので空になる想定）
+    updateRestartNote();
+
+    // 可視状態を決定（home なので非表示、game のときだけ表示）
+    updateRestartNoteVisibility();
+
+    // 結果画面のモード色を設定（現状は焼き芋のみなので固定でOK）
+    const resultScreen = document.getElementById('screen-result');
+    if (resultScreen) {
+      // 焼き芋: #DCAA5B / 秋モードを追加したら '#C26E6A' を切り替え
+      resultScreen.style.setProperty('--mode-color', '#DCAA5B');
+    }
   });
   
   function abortToReady() {
     // 中断: 保存はしない（finishGame を呼ばない）
     resetGameView();   // 画面とカウンタを初期化（オーバーレイ再表示）
     state.phase = 'ready';
+    updateRestartNote();
   }
 
   function onKeyDown(ev) {
