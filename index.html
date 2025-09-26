@@ -88,30 +88,30 @@
     <!-- =========================
          結果画面
     ========================== -->
-    <section id="screen-result" class="screen screen--result" data-screen="result" hidden
-      aria-labelledby="result-title">
+    <section id="screen-result" class="screen screen--result" data-screen="result" hidden aria-labelledby="result-title">
       <header class="result-header">
-        <h2 id="result-title">結果</h2>
+        <h2 id="result-title">焼き芋モード</h2>
       </header>
-
+    
       <div class="result-panel">
+        <!-- 左：完成度 -->
         <div class="result-row">
           <span class="result-label">完成度</span>
           <strong id="result-accuracy" class="result-value" data-field="resultAccuracy">--%</strong>
         </div>
+    
+        <!-- 右：時間 -->
         <div class="result-row">
-          <span class="result-label">経過時間</span>
+          <span class="result-label">焼き上がりにかかった時間</span>
           <strong id="result-time" class="result-value" data-field="resultTime">--秒</strong>
         </div>
-        <p id="yakiimo-grade" class="result-grade" data-field="yakiimoGrade">—</p>
+    
+        <!-- 下段中央：ひとこと（★ 新設：result-panel 内に配置） -->
+        <div class="result-row result-row--hito">
+          <span class="result-label">ひとこと</span>
+          <p id="result-comment" class="result-comment" data-field="resultComment"></p>
+        </div>
       </div>
-
-      <!-- 称号／ひとこと（プレースホルダのみ） -->
-      <section class="result-extra">
-        <h3 class="sr-only">称号とひとこと</h3>
-        <p id="result-title-text" class="result-title-text" data-field="resultTitle">（称号が入ります）</p>
-        <p id="result-comment" class="result-comment" data-field="resultComment">（ひとことが入ります）</p>
-      </section>
 
       <div class="result-actions">
         <button id="btn-retry" class="btn btn--primary" data-action="retry">もう一度遊ぶ</button>

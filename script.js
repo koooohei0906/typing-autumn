@@ -25,7 +25,7 @@
 
   // ==== 参照 ====
   let screens, overlay, timerEl, romajiLine, jpSentence, feedback;
-  let resultAccuracyEl, resultTimeEl, resultGradeEl, bestAccEl, bestTimeEl;
+  let resultAccuracyEl, resultTimeEl, bestAccEl, bestTimeEl;
 
   // ==== 状態 ====
   const state = {
@@ -158,6 +158,24 @@
     }
   }
 
+  // ==== 結果タイトル＆ひとこと ====
+  function hitoKotoText(acc) {
+    if (acc === 100) return '完璧！焼き芋職人です！🔥';
+    if (acc >= 90) return '美味しそう！あと少しで完璧🍠';
+    if (acc >= 80) return 'なかなかの腕前です！✨';
+    return 'まだ生っぽい…もう一回いこう！';
+  }
+
+  function updateResultHeaderAndHitoKoto(accuracy) {
+    const modeName = document.getElementById('game-title')?.textContent?.trim() || '焼き芋モード';
+    if (resultTitleEl) resultTitleEl.textContent = modeName;
+
+    const commentEl = document.getElementById('result-comment');
+    if (commentEl) commentEl.textContent = hitoKotoText(accuracy);
+  }
+
+  let resultTitleEl;
+
   // ==== 入力 ====
   document.addEventListener('DOMContentLoaded', () => {
     // 要素
@@ -173,7 +191,7 @@
     feedback = document.getElementById('feedback');
     resultAccuracyEl = document.getElementById('result-accuracy');
     resultTimeEl = document.getElementById('result-time');
-    resultGradeEl = document.getElementById('yakiimo-grade');
+    resultTitleEl = document.querySelector('.result-header h2');
     bestAccEl = document.getElementById('best-accuracy');
     bestTimeEl = document.getElementById('best-time');
 
@@ -543,16 +561,9 @@
   }
 
   function setResult(accuracy, timeSec) {
-    resultAccuracyEl && (resultAccuracyEl.textContent = `${accuracy}%`);
-    resultTimeEl && (resultTimeEl.textContent = `${timeSec.toFixed(1)}秒`);
-    resultGradeEl && (resultGradeEl.textContent = gradeText(accuracy));
-  }
-
-  function gradeText(acc) {
-    if (acc === 100) return '完璧な焼き芋';
-    if (acc >= 90) return '美味しそうな焼き芋';
-    if (acc >= 80) return '少し焦げ気味';
-    return 'まだ生っぽい';
+    if (resultAccuracyEl) resultAccuracyEl.textContent = `${accuracy}%`;
+    if (resultTimeEl) resultTimeEl.textContent = `${timeSec.toFixed(1)}秒`;
+    updateResultHeaderAndHitoKoto(accuracy);
   }
 
   // ==== ベストスコア ====
