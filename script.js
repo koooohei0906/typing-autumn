@@ -1,21 +1,23 @@
-// タイピングの秋 - MVP Step 3
-// 追加: 「しゃ/しゅ/しょ」= sha/sya 系許容, 促音「っ」= xtu/ltu or 子音重ね
 (() => {
   'use strict';
 
-  // ==== データ ====
+  // ==== 問題文データ ====
   const QUESTIONS = [
     { id: 1, jp: '芋', romaji: 'imo', chunks: ['imo'] },
     { id: 2, jp: '焼き芋', romaji: 'yakiimo', chunks: ['yakiimo'] },
-    { id: 3, jp: 'ホクホクの焼き芋', romaji: 'hokuhokunoyakiimo', chunks: ['hokuhoku', 'no', 'yakiimo'] },
-    {
-      id: 4, jp: 'ホクホクの焼き芋を作るためにタイピングを頑張ります',
-      romaji: 'hokuhokunoyakiimowotukurutamenitaipinnguwogannbarimasu',
-      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'tukuru', 'tameni', 'taipinngu', 'wo', 'gannbarimasu']
+    { 
+      id: 3, jp: '今日は焼き芋日和だね',
+      romaji: 'kyouhayakiimobiyoridane',
+      chunks: ['kyou', 'ha', 'yakiimo', 'biyori', 'dane']
     },
     {
-      id: 5, jp: '焼き芋が完成しましたっ', romaji: 'yakiimogakannseisimasitaltu',
-      chunks: ['yakiimo', 'ga', 'kannseisimasitaltu']
+      id: 4, jp: '芋もぐもぐ山芋ごろごろ芋祭り',
+      romaji: 'imomogumoguyamaimogorogoroimomatsuri',
+      chunks: ['imo', 'mogumogu', 'yamaimo', 'gorogoro', 'imomaturi']
+    },
+    {
+      id: 5, jp: '焼き芋が出来上がりました', romaji: 'yakiimogadekiagarimasita',
+      chunks: ['yakiimo', 'ga', 'dekiagari', 'masita']
     },
   ];
 
@@ -24,7 +26,7 @@
   const VOWELS = new Set(['a', 'i', 'u', 'e', 'o']);
   const isConsonant = (ch) => /^[a-z]$/.test(ch) && !VOWELS.has(ch);
 
-  // ltu/xtu 起点判定（未定義なら追加）
+  // ltu/xtu 起点判定
   function isLtuStart(ptr) { return state.target.slice(ptr, ptr + 3) === 'ltu'; }
   function isXtuStart(ptr) { return state.target.slice(ptr, ptr + 3) === 'xtu'; }
 
@@ -76,6 +78,7 @@
     chi2tiStage: 0, chi2tiPtr: -1,   // target: 'chi' を 't' 'i' で入力する時の段階管理
     di2jiStage: 0, di2jiPtr: -1,   // target: 'di' を 'j' 'i' で入力
     ji2diStage: 0, ji2diPtr: -1,   // target: 'ji' を 'd' 'i' で入力
+    allowExtraN: false,   // 単独『ん』直後の余分な n を1回だけ無効化
   };
 
   function setRestartNote(html) {
@@ -151,6 +154,7 @@
     state.chi2tiStage = 0; state.chi2tiPtr = -1;
     state.di2jiStage = 0; state.di2jiPtr = -1;
     state.ji2diStage = 0; state.ji2diPtr = -1;
+    state.allowExtraN = false;
   }
 
   function loadQuestionByIndex(idx) {
@@ -361,6 +365,21 @@
     const key = ev.key.length === 1 ? ev.key.toLowerCase() : '';
     if (!/[a-z]/.test(key)) return;
 
+    // ★ 単独『ん』直後の余分な n を1回だけ無効化（精度を落とさない）
+    //   totalKeys++ の前に処理して、カウントさせない。
+    if (state.allowExtraN) {
+      if (key === 'n') {
+        // 見た目の赤を念のため除去（現在/直前の両方）
+        clearMissAtPointer();
+        // （任意）ちょい演出
+        if (typeof spawnTypingEffect === 'function') spawnTypingEffect('success');
+        return; // フラグは維持したまま。n を飲み込み続ける
+      } else {
+        // n 以外が来たら通常モードへ復帰
+        state.allowExtraN = false;
+      }
+    }
+
     state.totalKeys++;
 
     // 促音の進行中（xtu/ltu）を先に処理
@@ -397,10 +416,27 @@
       }
     }
 
-    // 3) 'nn' ←→ 'n'
-    if (state.target.slice(state.pointer, state.pointer + 2) === 'nn' && key === 'n') {
-      accept(2, key); // 'nn' を1打で許容
-      return;
+    // 3) “ん”の柔軟一致（ここで一括処理：必ず nn を優先）
+    if (key === 'n') {
+      const two = state.target.slice(state.pointer, state.pointer + 2);
+
+      // 3-1) target が "nn" のとき：'n' 一打で二文字まとめて消化
+      if (two === 'nn') {
+        accept(2, key);
+        return;
+      }
+
+      // 3-2) target が 単独 'n' のとき（次が母音/ y でない = 'ん' のケース）
+      const cur = state.target[state.pointer];
+      const next = state.target[state.pointer + 1] || '';
+      const nextIsVowelOrY = VOWELS.has(next) || next === 'y';
+      if (cur === 'n' && !nextIsVowelOrY) {
+        // 一文字だけ前進して『ん』確定、直後の余分な 'n' は1回だけ無効化
+        state.allowExtraN = true;
+        accept(1, key);
+        clearMissAtPointer();
+        return;
+      }
     }
 
     // 4) 「しゃ/しゅ/しょ」系: 'sha','shu','sho','she' ←→ 'sya','syu','syo','sye'
@@ -651,6 +687,18 @@
   }
   function markNeutralHit() { // 促音途中のポジティブ演出
     spawnTypingEffect('success');
+  }
+
+  function clearMissAtPointer() {
+    if (!romajiLine) return;
+    const spans = romajiLine.children;
+    if (!spans || !spans.length) return;
+
+    const i = Math.min(state.pointer, spans.length - 1);
+    // 現在位置（次に打つ予定の文字）
+    if (spans[i]) spans[i].classList.remove('ng');
+    // 念のため直前の文字も赤を外す（視覚的な取りこぼし防止）
+    if (i - 1 >= 0 && spans[i - 1]) spans[i - 1].classList.remove('ng');
   }
 
   // ==== 終了・結果 ====
