@@ -318,14 +318,20 @@ body {
   left: 50%;
   top: 8px;
 
-  /* 原点（left/top）を中央基準にする */
-  transform: translate(-50%, -50%);
-
-  font-size: 28px;                 /* Reactの text-2xl 相当 */
-  animation: typing-effect 0.9s ease-out forwards;
+  /* 原点を中心に。ここから keyframes でさらに動かす */
+  /* transform は keyframes 側で上書きするので初期値は不要でもOK */
+  font-size: 28px;
+  animation: typing-effect var(--dur, 0.9s) ease-out forwards;
   will-change: transform, opacity;
   text-shadow: 0 2px 6px rgba(0, 0, 0, .15);
-  opacity: 0;                      /* 遅延があるので初期は0 */
+  opacity: 0;
+
+  /* ランダム用のCSS変数（JSで上書き） */
+  --jitter-x: 0px;   /* 横ブレ */
+  --y0: 0px;         /* 初期Y微調整（+で下から） */
+  --rise: 36px;      /* 上昇量 */
+  --rot: 0deg;       /* 角度の揺れ */
+  --dur: 0.9s;       /* 持続時間 */
 }
 
 /* 成功/ミスで微妙に大きさを変えたい場合（任意） */
@@ -341,16 +347,29 @@ body {
 @keyframes typing-effect {
   0% {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(0) scale(1);
+    transform:
+      translate(-50%, -50%)
+      translateX(var(--jitter-x))
+      translateY(var(--y0))
+      scale(1)
+      rotate(var(--rot));
   }
-
   50% {
-    transform: translate(-50%, -50%) translateY(-18px) scale(1.15);
+    transform:
+      translate(-50%, -50%)
+      translateX(calc(var(--jitter-x) * 0.6))
+      translateY(calc(var(--y0) - var(--rise) * 0.5))
+      scale(1.15)
+      rotate(var(--rot));
   }
-
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(-36px) scale(0.9);
+    transform:
+      translate(-50%, -50%)
+      translateX(calc(var(--jitter-x) * 1.2))
+      translateY(calc(var(--y0) - var(--rise)))
+      scale(0.9)
+      rotate(var(--rot));
   }
 }
 

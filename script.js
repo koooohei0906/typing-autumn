@@ -303,10 +303,25 @@
     el.className = 'typing-effect ' + (kind === 'success' ? 'typing-effect--success' : 'typing-effect--miss');
     el.textContent = (kind === 'success') ? '🔥' : '💧';
 
+    // 1) 炎の原点
     const { left, top } = getEffectOrigin();
     el.style.left = (typeof left === 'number') ? `${left}px` : left;
     el.style.top  = (typeof top === 'number') ? `${top}px` : top;
-    // 連打で少しだけディレイをずらして重なりを軽減
+
+    // 2) ランダムゆらぎ（±はお好みで）
+    const jitterX = (Math.random() * 16 - 8).toFixed(1);   // -8px ～ +8px
+    const y0 = (Math.random() * 10 - 3).toFixed(1);   // -3px ～ +7px（出発高さの微調整）
+    const rise = (Math.random() * 20 + 40).toFixed(1);  // 40px ～ 60px（上昇量）
+    const rot = (Math.random() * 10 - 5).toFixed(1);   // -5deg ～ +5deg（傾き）
+    const dur = (Math.random() * 0.3 + 0.85).toFixed(2); // 0.85s ～ 1.15s
+
+    el.style.setProperty('--jitter-x', `${jitterX}px`);
+    el.style.setProperty('--y0', `${y0}px`);
+    el.style.setProperty('--rise', `${rise}px`);
+    el.style.setProperty('--rot', `${rot}deg`);
+    el.style.setProperty('--dur', `${dur}s`);
+
+    // 3) 連打で少しタイミングをずらして重なり軽減
     const delay = (typingEffectSeq % 5) * 60; // ms
     typingEffectSeq++;
     el.style.animationDelay = `${delay}ms`;
