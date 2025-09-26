@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>タイピングの秋 - 焼き芋モード</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script defer src="./script.js"></script>
+</head>
+
+<body>
+  <main id="app" class="app" data-app-version="mvp-1">
+    <!-- =========================
+         トップ画面
+    ========================== -->
+    <section id="screen-home" class="screen screen--home" data-screen="home" aria-labelledby="home-title">
+      <header class="home-header">
+        <h1 id="home-title">タイピングの秋 🍁✍️</h1>
+      </header>
+
+      <div class="mode-card" data-mode="yakiimo">
+        <h2 class="mode-title">焼き芋モード</h2>
+        <p class="mode-desc">焼き芋にまつわる文章でタイピング！</p>
+
+        <!-- 👑 ベストスコア -->
+        <div class="bestscore" aria-label="ベストスコア">
+          <div class="bestscore__title" aria-hidden="true">👑 ベストスコア</div>
+          <div class="bestscore__row">
+            <span class="bestscore__label">完成度</span>
+            <strong id="best-accuracy" class="bestscore__value" data-field="bestAccuracy">--%</strong>
+          </div>
+          <div class="bestscore__row">
+            <span class="bestscore__label">焼き上がり時間</span>
+            <strong id="best-time" class="bestscore__value" data-field="bestTime">--秒</strong>
+          </div>
+        </div>
+
+        <!-- ここからゲーム画面へ遷移 -->
+        <div class="actions">
+          <button id="btn-start-home" class="btn btn--primary" data-action="goto-game">
+            プレイする
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         ゲーム画面
+         - 初期表示は「スペースキーでゲーム開始」オーバーレイのみ
+         - 入力欄は置かず、keydownで判定（JS側で実装）
+    ========================== -->
+    <section id="screen-game" class="screen screen--game" data-screen="game" hidden aria-labelledby="game-title">
+      <header class="game-header">
+        <div class="game-mode" id="game-title">焼き芋モード</div>
+        <div class="game-timer" aria-live="polite">
+          <span class="timer-icon" aria-hidden="true">⏱</span>
+          <strong id="timer" data-field="timer">0.0</strong><span class="timer-unit">秒</span>
+        </div>
+      </header>
+
+      <!-- スペースキー開始オーバーレイ -->
+      <div id="start-overlay" class="start-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="start-overlay-title">
+        <p id="start-overlay-title" class="start-overlay__title">スペースキーでゲーム開始</p>
+        <p class="start-overlay__sub">はじめると同時にタイマーが動きます</p>
+      </div>
+
+      <div class="game-board" aria-live="polite" aria-atomic="true">
+        <!-- ローマ字行（タイプに応じて灰色／赤にJSで更新） -->
+        <div id="romaji-line" class="romaji-line" aria-label="ローマ字ガイド"></div>
+
+        <!-- 日本語の問題文（常に黒で表示） -->
+        <div id="jp-sentence" class="jp-sentence" aria-label="問題文"></div>
+
+        <!-- フィードバック（🔥/💧など簡易演出） -->
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+
+        <!-- 焼き芋イラストの置き場 -->
+        <div id="yakiimo-illustration" class="yakiimo-illustration" role="img" aria-label="焼き芋の演出エリア">🍠</div>
+      </div>
+
+      <div class="game-actions">
+        <button id="btn-giveup" class="btn btn--ghost" data-action="back-home">やめてトップへ</button>
+      </div>
+    </section>
+
+    <!-- =========================
+         結果画面
+    ========================== -->
+    <section id="screen-result" class="screen screen--result" data-screen="result" hidden
+      aria-labelledby="result-title">
+      <header class="result-header">
+        <h2 id="result-title">結果</h2>
+      </header>
+
+      <div class="result-panel">
+        <div class="result-row">
+          <span class="result-label">完成度</span>
+          <strong id="result-accuracy" class="result-value" data-field="resultAccuracy">--%</strong>
+        </div>
+        <div class="result-row">
+          <span class="result-label">経過時間</span>
+          <strong id="result-time" class="result-value" data-field="resultTime">--秒</strong>
+        </div>
+        <p id="yakiimo-grade" class="result-grade" data-field="yakiimoGrade">—</p>
+      </div>
+
+      <!-- 称号／ひとこと（プレースホルダのみ） -->
+      <section class="result-extra">
+        <h3 class="sr-only">称号とひとこと</h3>
+        <p id="result-title-text" class="result-title-text" data-field="resultTitle">（称号が入ります）</p>
+        <p id="result-comment" class="result-comment" data-field="resultComment">（ひとことが入ります）</p>
+      </section>
+
+      <div class="result-actions">
+        <button id="btn-retry" class="btn btn--primary" data-action="retry">もう一度</button>
+        <button id="btn-back-home" class="btn btn--ghost" data-action="back-home">トップへ戻る</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 視覚的に隠すユーティリティ（CSSで .sr-only を定義） -->
+  <div class="sr-only" aria-hidden="true"></div>
+</body>
+
+</html>

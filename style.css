@@ -1,0 +1,482 @@
+/* ================================
+   タイピングの秋 - style.css (Figma/Tailwind準拠)
+   - HTMLはあなたが用意した index.html 構造そのまま
+   - TypeScript/React 依存なし
+================================== */
+
+/* Noto Sans JP */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;900&display=swap');
+
+/* ---- Design Tokens (from TSX) ---- */
+:root {
+  /* Palette（AutumnDecorations / GameScreen 由来） */
+  --c-leaf: #C26E6A;
+  /* 赤みの落ち葉 */
+  --c-gold: #DCAA5B;
+  /* 焼き芋モード基調色(枠色) */
+  --c-olive: #5B6857;
+  /* 深い緑 */
+  --c-text: #1F2937;
+  /* gray-800 */
+  --c-muted: #6B7280;
+  /* gray-500/600 */
+  --c-ok: #9CA3AF;
+  /* gray-400 (ローマ字OK) */
+  --c-ng: #DC2626;
+  /* 赤 (ローマ字NG) */
+  --c-ng-bg: #FEE2E2;
+  /* red-100 */
+
+  --card-radius-xl: 22px;
+  --card-radius-lg: 16px;
+  --card-radius-md: 12px;
+
+  --container-w: 64rem;
+  /* max-w-4xl ＝ 1024px  */
+}
+
+/* ---- Reset ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---- Base ---- */
+body {
+  font-family: 'Noto Sans JP', system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  color: var(--c-text);
+  /* App.tsx / GameScreen.tsx 背景: bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50 */
+  background: linear-gradient(135deg, #F8FAFC 0%, #FFF3E0 48%, #FFE0B2 100%);
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- 背景デコ（AutumnDecorations.tsx 代替） ---- */
+.app::before,
+.app::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+
+.app::before {
+  /* top-20 left-10 w-32 h-32 (#C26E6A) */
+  width: 8rem;
+  height: 8rem;
+  left: 2.5rem;
+  top: 5rem;
+  background: var(--c-leaf);
+  opacity: .20;
+}
+
+.app::after {
+  /* bottom-20 right-10 w-28 h-28 (#C26E6A) */
+  width: 7rem;
+  height: 7rem;
+  right: 2.5rem;
+  bottom: 5rem;
+  background: var(--c-leaf);
+  opacity: .25;
+}
+
+/* 追加の柔らかい円 */
+.app .decor-a,
+.app .decor-b,
+.app .decor-c {
+  display: none;
+}
+
+/* 予備 */
+
+/* ---- Screen/Card ---- */
+.screen {
+  width: 100%;
+  max-width: var(--container-w);
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  /* bg-white/95 */
+  border: 2px solid var(--c-gold);
+  /* モード色枠 */
+  border-radius: var(--card-radius-xl);
+  box-shadow:
+    0 40px 70px -30px rgba(0, 0, 0, 0.20),
+    0 18px 38px -16px rgba(0, 0, 0, 0.12);
+  padding: 3rem;
+  /* p-12 */
+  backdrop-filter: blur(6px);
+  /* backdrop-blur-md */
+}
+
+/* Card 内の円装飾（GameScreen.tsxの top/right と bottom/left） */
+.screen--game::before,
+.screen--game::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: var(--c-gold);
+  opacity: .12;
+  pointer-events: none;
+}
+
+.screen--game::before {
+  width: 6rem;
+  height: 6rem;
+  right: 1rem;
+  top: 1rem;
+}
+
+.screen--game::after {
+  width: 4rem;
+  height: 4rem;
+  left: 1rem;
+  bottom: 1rem;
+}
+
+/* ---- Home ---- */
+.home-header h1 {
+  margin: 0 0 .5rem;
+  font-weight: 900;
+  font-size: 2rem;
+}
+
+.mode-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  margin: 0 .0 .25rem 0;
+}
+
+.mode-desc {
+  margin: 0 0 1.25rem;
+  color: var(--c-muted);
+}
+
+/* 👑 ベストスコア（TSXの色味に合わせて金色系） */
+.bestscore {
+  border-radius: var(--card-radius-lg);
+  padding: 1rem 1.25rem;
+  background: rgba(220, 170, 91, 0.10);
+  border: 2px solid rgba(220, 170, 91, 0.25);
+  margin: 1rem 0 1.5rem;
+}
+
+.bestscore__title {
+  font-weight: 800;
+  color: var(--c-gold);
+  margin-bottom: .4rem;
+}
+
+.bestscore__row {
+  display: flex;
+  gap: .75rem;
+  align-items: baseline;
+  margin: .15rem 0;
+}
+
+.bestscore__label {
+  color: var(--c-muted);
+  width: 9em;
+  font-size: .95rem;
+}
+
+.bestscore__value {
+  color: var(--c-gold);
+  font-weight: 900;
+  font-size: 1.15rem;
+}
+
+/* Home Actions */
+.actions {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: .9rem 1.4rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.btn--primary {
+  color: #fff;
+  background: var(--c-gold);
+  box-shadow: 0 10px 20px rgba(220, 170, 91, .32);
+  transition: transform .15s ease, filter .15s ease;
+}
+
+.btn--primary:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.05);
+}
+
+.btn--ghost {
+  color: #7C6A4A;
+  border: 1px solid rgba(220, 170, 91, .35);
+  background: #FFF7EB;
+}
+
+/* ---- Game Header (左:モード、右:タイマー) ---- */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -0.25rem 0 2.25rem;
+}
+
+.game-mode {
+  color: #7C6A4A;
+  font-weight: 700;
+}
+
+.game-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+  font-weight: 900;
+  font-size: 1.25rem;
+  color: var(--c-gold);
+}
+
+.timer-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--c-gold);
+  color: #fff;
+  font-size: 1rem;
+}
+
+#timer {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---- Game Board ---- */
+.game-board {
+  position: relative;
+  border-radius: var(--card-radius-lg);
+  padding: 1.8rem 1.5rem 2.2rem;
+  min-height: 20rem;
+  /* TSX: bg-white/50 + blur + border with mode color 20% */
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(220, 170, 91, 0.20);
+}
+
+/* ローマ字（上段：淡いグレー、成功は薄灰、失敗は赤） */
+.romaji-line {
+  min-height: 1.8rem;
+  text-align: center;
+  letter-spacing: .06em;
+  color: #9AA1AC;
+  /* base gray-400~500 */
+  font-weight: 600;
+  margin: .25rem 0 1rem;
+  user-select: none;
+}
+
+.romaji-line span {
+  padding: 0 .3ch;
+}
+
+.romaji-line .ok {
+  color: var(--c-ok);
+}
+
+.romaji-line .ng {
+  color: var(--c-ng);
+}
+
+/* 日本語問題文（大きく・中央） */
+.jp-sentence {
+  text-align: center;
+  font-size: clamp(28px, 5vw, 40px);
+  /* TSX: text-4xl */
+  line-height: 1.6;
+  font-weight: 800;
+  color: #394049;
+  /* 落ち着いた黒 */
+  padding: 1.25rem 1rem;
+  margin: 0 auto .75rem;
+  border: 1px solid rgba(220, 170, 91, 0.20);
+  border-radius: 14px;
+  max-width: 880px;
+}
+
+/* 成否フィードバック（🔥/💧） */
+.feedback {
+  text-align: center;
+  min-height: 1.4rem;
+  font-weight: 800;
+  color: #7C6A4A;
+  margin: .4rem 0 .9rem;
+}
+
+.feedback.success {
+  color: #B07A00;
+}
+
+.feedback.error {
+  color: var(--c-ng);
+  background: var(--c-ng-bg);
+  border-radius: 10px;
+  display: inline-block;
+  padding: .1rem .5rem;
+}
+
+/* 焼き芋イラスト置き場（中央下） */
+.yakiimo-illustration {
+  text-align: center;
+  font-size: 36px;
+  opacity: .9;
+  margin-top: .6rem;
+}
+
+/* Start Overlay（スペースキーで開始） */
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 244, 226, .82);
+  border-radius: var(--card-radius-lg);
+  border: 1px dashed rgba(220, 170, 91, .45);
+  text-align: center;
+  padding: 24px;
+}
+
+.start-overlay__title {
+  font-size: clamp(20px, 3.6vw, 28px);
+  font-weight: 900;
+  color: var(--c-gold);
+  margin: 0 0 6px;
+}
+
+.start-overlay__sub {
+  margin: 0;
+  color: #7C6A4A;
+  font-weight: 600;
+}
+
+/* ---- Result Screen ---- */
+.result-header h2 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.result-panel {
+  border: 2px solid rgba(220, 170, 91, .25);
+  background: rgba(220, 170, 91, .10);
+  border-radius: var(--card-radius-lg);
+  padding: 1.25rem 1.35rem;
+}
+
+.result-row {
+  display: flex;
+  gap: .75rem;
+  align-items: baseline;
+  margin: .4rem 0;
+}
+
+.result-label {
+  width: 7em;
+  color: var(--c-muted);
+}
+
+.result-value {
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: var(--c-gold);
+}
+
+.result-grade {
+  margin: .8rem 0 0;
+  font-weight: 700;
+  color: #7C6A4A;
+}
+
+.result-extra {
+  margin: 1.1rem 0 .4rem;
+  text-align: center;
+}
+
+.result-title-text {
+  font-weight: 800;
+  margin: 0 0 .3rem;
+  color: var(--c-gold);
+  font-size: 1.25rem;
+}
+
+.result-comment {
+  margin: 0;
+  color: var(--c-muted);
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: .75rem;
+  margin-top: 1.1rem;
+}
+
+/* ---- Utilities ---- */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Screen toggle ---- */
+[data-screen][hidden] {
+  display: none !important;
+}
+
+/* PC少し広め */
+@media (min-width:1200px) {
+  .screen {
+    padding: 3.25rem;
+  }
+
+  .game-board {
+    min-height: 22rem;
+  }
+}
