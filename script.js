@@ -6,32 +6,6 @@
   // ==== データ ====
   const QUESTIONS = [
     { id: 1, jp: '芋', romaji: 'imo', chunks: ['imo'] },
-    { id: 2, jp: '焼き芋', romaji: 'yakiimo', chunks: ['yakiimo'] },
-    { id: 3, jp: 'ホクホクの焼き芋', romaji: 'hokuhokunoyakiimo', chunks: ['hokuhoku', 'no', 'yakiimo'] },
-    { id: 4, jp: 'ホクホクの焼き芋をほおばる', romaji: 'hokuhokunoyakiimowohoobaru', chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'hoobaru'] },
-    {
-      id: 5, jp: 'ホクホクの焼き芋をほおばると自然に笑顔になる',
-      romaji: 'hokuhokunoyakiimowohoobarutosizenniegaoninaru',
-      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'hoobaruto', 'sizenni', 'egaoni', 'naru']
-    },
-    { id: 6, jp: 'ホクホクの焼き芋を作りたい', romaji: 'hokuhokunoyakiimowotukuritai', chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'tukuritai'] },
-    {
-      id: 7, jp: 'ホクホクの焼き芋を作るためにタイピングを頑張ります',
-      romaji: 'hokuhokunoyakiimowotukurutamenitaipinnguwogannbarimasu',
-      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'tukuru', 'tameni', 'taipinngu', 'wo', 'gannbarimasu']
-    },
-    {
-      id: 8, jp: 'ホクホクの焼き芋を作るのは難しい', romaji: 'hokuhokunoyakiimowotukurunohamuzukasii',
-      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'tukurunoha', 'muzukasii']
-    },
-    {
-      id: 9, jp: 'ホクホクの焼き芋まであと少し', romaji: 'hokuhokunoyakiimomadeatosukosi',
-      chunks: ['hokuhoku', 'no', 'yakiimo', 'made', 'atosukosi']
-    },
-    {
-      id: 10, jp: '焼き芋が完成しましたっっ', romaji: 'yakiimogakannseisimasitaltultu',
-      chunks: ['yakiimo', 'ga', 'kannseisimasita', 'ltultu']
-    },
   ];
 
   // 記号・空白は無視
@@ -223,9 +197,19 @@
     // 初期表示
     showScreen('home');
     renderBest();
+
+    // ①-1: メインの「焼き上がり時間」行を隠す
+    const bestTimeRow = bestTimeEl?.closest('.bestscore__row');
+    if (bestTimeRow) bestTimeRow.hidden = true; // [hidden]{display:none !important;} が効きます
+
+    // ①-2: 結果画面の時間ラベルを「焼き上がりにかかった時間」に変更
+    const timeRow = resultTimeEl?.closest('.result-row');
+    const timeLbl = timeRow?.querySelector('.result-label');
+    if (timeLbl) timeLbl.textContent = '焼き上がりにかかった時間';
   });
   
   function abortToReady() {
+    // 中断: 保存はしない（finishGame を呼ばない）
     resetGameView();   // 画面とカウンタを初期化（オーバーレイ再表示）
     state.phase = 'ready';
   }
@@ -568,7 +552,7 @@
     if (acc === 100) return '完璧な焼き芋';
     if (acc >= 90) return '美味しそうな焼き芋';
     if (acc >= 80) return '少し焦げ気味';
-    return 'まだ生っぽい'; // <80% は包含（あなたの合意どおり）
+    return 'まだ生っぽい';
   }
 
   // ==== ベストスコア ====
@@ -582,13 +566,11 @@
   }
   function renderBest() {
     const best = loadBest();
-    if (!bestAccEl || !bestTimeEl) return;
+    if (!bestAccEl) return;
     if (best) {
       bestAccEl.textContent = `${best.accuracy}%`;
-      bestTimeEl.textContent = `${best.timeSec.toFixed(1)}秒`;
     } else {
       bestAccEl.textContent = `--%`;
-      bestTimeEl.textContent = `--秒`;
     }
   }
   function maybeSaveBest(accuracy, timeSec) {

@@ -63,7 +63,7 @@ button {
 
 /* ---- Base ---- */
 body {
-  font-family: 'Noto Sans JP', system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: var(--c-text);
   /* App.tsx / GameScreen.tsx 背景: bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50 */
   background: linear-gradient(135deg, #F8FAFC 0%, #FFF3E0 48%, #FFE0B2 100%);
@@ -233,6 +233,8 @@ body {
   background: var(--c-gold);
   box-shadow: 0 10px 20px rgba(220, 170, 91, .32);
   transition: transform .15s ease, filter .15s ease;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo",
+      -apple-system, BlinkMacSystemFont, "San Francisco", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .btn--primary:hover {
@@ -298,17 +300,23 @@ body {
 /* ローマ字（上段：淡いグレー、成功は薄灰、失敗は赤） */
 .romaji-line {
   min-height: 1.8rem;
-  text-align: center;
-  letter-spacing: .06em;
+  display: flex;           /* ← 子要素をフレックス化 */
+  flex-wrap: wrap;         /* ← 複数行OK */
+  justify-content: center; /* ← 左右中央寄せ */
+  letter-spacing: .02em;
   color: #1F2937;
   /* base gray-400~500 */
   font-weight: 600;
   margin: .25rem 0 1rem;
   user-select: none;
+  white-space: normal;     /* 改行可能に */
+  overflow-wrap: anywhere; /* どこでも折り返しOK */
+  word-break: break-word;  /* 単語（まとまり）でも改行可 */
 }
 
 .romaji-line span {
-  padding: 0 .3ch;
+  padding: 0 .15ch;
+display: inline-block;
 }
 
 .romaji-line .ok {
@@ -330,7 +338,7 @@ body {
   font-size: clamp(28px, 5vw, 40px);
   /* TSX: text-4xl */
   line-height: 1.6;
-  font-weight: 800;
+  font-weight: 400;
   color: #394049;
   /* 落ち着いた黒 */
   padding: 1.25rem 1rem;
@@ -397,65 +405,139 @@ body {
 }
 
 /* ---- Result Screen ---- */
-.result-header h2 {
-  margin: 0 0 1rem;
+.screen--result .result-header h2 {
+  margin: 0 0 1.4rem;
   font-size: 1.5rem;
   font-weight: 900;
+  color: var(--c-gold);
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
 }
 
+.screen--result .result-header h2::before {
+  content: "🔥";
+  /* 左の丸アイコン（必要に応じて変更OK） */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c-gold);
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+/* カード本体：完成度と時間を左右2カラムに */
 .result-panel {
   border: 2px solid rgba(220, 170, 91, .25);
   background: rgba(220, 170, 91, .10);
   border-radius: var(--card-radius-lg);
   padding: 1.25rem 1.35rem;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 3.5rem;
+  row-gap: 1rem;
+  justify-items: center;
+  align-items: end;
 }
 
+/* 2カラム内の各ブロック（縦にラベル→数値） */
 .result-row {
+  margin: 0;
   display: flex;
-  gap: .75rem;
-  align-items: baseline;
-  margin: .4rem 0;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
 }
 
+/* ラベルをチップ風に */
 .result-label {
-  width: 7em;
-  color: var(--c-muted);
-}
-
-.result-value {
-  font-weight: 900;
-  font-size: 1.4rem;
+  width: auto;
   color: var(--c-gold);
+  font-weight: 800;
+  border: 2px solid rgba(220, 170, 91, .5);
+  border-radius: 999px;
+  padding: .15rem .6rem;
+  background: #fff;
 }
 
-.result-grade {
-  margin: .8rem 0 0;
-  font-weight: 700;
-  color: #7C6A4A;
+/* 数値の見た目（左：%を大きく／右：秒も大きく） */
+#result-accuracy {
+  font-weight: 900;
+  font-size: 2.75rem;
+  /* 例: 92% */
+  color: var(--c-gold);
+  line-height: 1;
 }
 
+#result-time {
+  font-weight: 900;
+  font-size: 2.1rem;
+  /* 例: 23.0秒 */
+  color: var(--c-gold);
+  line-height: 1;
+}
+
+/* ひとこと：2カラムの下に1段で */
 .result-extra {
-  margin: 1.1rem 0 .4rem;
+  grid-column: 1 / -1;
+  margin: .9rem 0 .4rem;
   text-align: center;
 }
 
 .result-title-text {
+  display: inline-block;
   font-weight: 800;
-  margin: 0 0 .3rem;
+  margin: 0 0 .4rem;
   color: var(--c-gold);
-  font-size: 1.25rem;
+  font-size: 1.05rem;
+  border: 2px solid rgba(220, 170, 91, .5);
+  border-radius: 999px;
+  padding: .15rem .6rem;
+  background: #fff;
 }
 
 .result-comment {
   margin: 0;
   color: var(--c-muted);
+  font-weight: 700;
 }
 
+/* ボタン：左右に「もう一度遊ぶ」「トップへ戻る」 */
 .result-actions {
-  display: flex;
-  justify-content: center;
-  gap: .75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .8rem;
   margin-top: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.result-actions .btn {
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+/* 共有ボタン：その下で横幅いっぱい */
+.screen--result .result-share {
+  margin-top: .6rem;
+}
+
+.screen--result .result-share .btn,
+.screen--result .btn--share,
+.screen--result [data-action="share-x"] {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 800;
+  background: #4B6152;  /* 深いオリーブ */
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(75, 97, 82, .25);
 }
 
 /* ---- Utilities ---- */
