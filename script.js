@@ -6,6 +6,17 @@
   // ==== データ ====
   const QUESTIONS = [
     { id: 1, jp: '芋', romaji: 'imo', chunks: ['imo'] },
+    { id: 2, jp: '焼き芋', romaji: 'yakiimo', chunks: ['yakiimo'] },
+    { id: 3, jp: 'ホクホクの焼き芋', romaji: 'hokuhokunoyakiimo', chunks: ['hokuhoku', 'no', 'yakiimo'] },
+    {
+      id: 4, jp: 'ホクホクの焼き芋を作るためにタイピングを頑張ります',
+      romaji: 'hokuhokunoyakiimowotukurutamenitaipinnguwogannbarimasu',
+      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'tukuru', 'tameni', 'taipinngu', 'wo', 'gannbarimasu']
+    },
+    {
+      id: 5, jp: '焼き芋が完成しましたっ', romaji: 'yakiimogakannseisimasitaltu',
+      chunks: ['yakiimo', 'ga', 'kannseisimasitaltu']
+    },
   ];
 
   // 記号・空白は無視
