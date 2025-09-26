@@ -3,8 +3,7 @@
 (() => {
   'use strict';
 
-  // ==== データ（ダミー）====
-  // 本番はあなたの焼き芋文章10本に差し替え
+  // ==== データ ====
   const QUESTIONS = [
     { id: 1, jp: '芋', romaji: 'imo', chunks: ['imo'] },
     { id: 2, jp: '焼き芋', romaji: 'yakiimo', chunks: ['yakiimo'] },
@@ -12,8 +11,8 @@
     { id: 4, jp: 'ホクホクの焼き芋をほおばる', romaji: 'hokuhokunoyakiimowohoobaru', chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'hoobaru'] },
     {
       id: 5, jp: 'ホクホクの焼き芋をほおばると自然に笑顔になる',
-      romaji: 'hokuhokunoyakiimowohoobarutoshizenniegaoninaru',
-      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'hoobaruto', 'shizenni', 'egaoni', 'naru']
+      romaji: 'hokuhokunoyakiimowohoobarutosizenniegaoninaru',
+      chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'hoobaruto', 'sizenni', 'egaoni', 'naru']
     },
     { id: 6, jp: 'ホクホクの焼き芋を作りたい', romaji: 'hokuhokunoyakiimowotukuritai', chunks: ['hokuhoku', 'no', 'yakiimo', 'wo', 'tukuritai'] },
     {
@@ -40,6 +39,16 @@
   const VOWELS = new Set(['a', 'i', 'u', 'e', 'o']);
   const isConsonant = (ch) => /^[a-z]$/.test(ch) && !VOWELS.has(ch);
 
+  // ltu/xtu 起点判定（未定義なら追加）
+  function isLtuStart(ptr) { return state.target.slice(ptr, ptr + 3) === 'ltu'; }
+  function isXtuStart(ptr) { return state.target.slice(ptr, ptr + 3) === 'xtu'; }
+
+  // 段階系の安全リセット
+  function resetStage(name) {
+    state[name + 'Stage'] = 0;
+    state[name + 'Ptr'] = -1;
+  }
+
   // ==== 参照 ====
   let screens, overlay, timerEl, romajiLine, jpSentence, feedback;
   let resultAccuracyEl, resultTimeEl, resultGradeEl, bestAccEl, bestTimeEl;
@@ -55,10 +64,16 @@
     totalKeys: 0,
     correctKeys: 0,
     lastAcceptedChar: '',
+    questionIndex: 0,  // 0..9 を順番に出す
 
     // 促音（xtu/ltu）入力の進捗: 0=未開始, 1= 'x'/'l' 入力済, 2='t'まで入力済
     sokuonStage: 0,
     sokuonPtr: -1, // 促音を当て込んでいる pointer 位置（ダブル子音の先頭に限定）
+
+    ti2chiStage: 0, ti2chiPtr: -1,   // target: 'ti' を 'c' 'h' 'i' で入力する時の段階管理
+    chi2tiStage: 0, chi2tiPtr: -1,   // target: 'chi' を 't' 'i' で入力する時の段階管理
+    di2jiStage: 0, di2jiPtr: -1,   // target: 'di' を 'j' 'i' で入力
+    ji2diStage: 0, ji2diPtr: -1,   // target: 'ji' を 'd' 'i' で入力
   };
 
   // ==== 画面遷移 ====
@@ -71,50 +86,78 @@
   }
 
   function resetGameView() {
-    overlay && overlay.removeAttribute('hidden');
-    timerEl && (timerEl.textContent = '0.0');
-    romajiLine && (romajiLine.textContent = '');
-    jpSentence && (jpSentence.textContent = '');
+    // オーバーレイ表示（スペースで開始に戻す）
+    if (overlay) {
+      overlay.hidden = false;
+      const sub = overlay.querySelector('.start-overlay__sub'); // ★ 追加
+      if (sub) sub.style.display = 'none';                       // ★ 非表示に
+    }
+
+    // タイマー停止（動いていたら念のため止める）
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+
+    // UIリセット
+    if (timerEl) timerEl.textContent = '0.0';
+    if (romajiLine) romajiLine.textContent = '';
+    if (jpSentence) jpSentence.textContent = '';
     if (feedback) { feedback.textContent = ''; feedback.className = 'feedback'; }
 
+    // ゲーム状態リセット
     state.q = null;
     state.target = '';
     state.pointer = 0;
     state.startedAt = 0;
     state.totalKeys = 0;
     state.correctKeys = 0;
+    state.questionIndex = 0;
     state.lastAcceptedChar = '';
+
+    // 促音系
     state.sokuonStage = 0;
     state.sokuonPtr = -1;
 
-    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+    // 段階管理（ti/di⇄chi/ji）
+    state.ti2chiStage = 0; state.ti2chiPtr = -1;
+    state.chi2tiStage = 0; state.chi2tiPtr = -1;
+    state.di2jiStage = 0; state.di2jiPtr = -1;
+    state.ji2diStage = 0; state.ji2diPtr = -1;
   }
+
+  function loadQuestionByIndex(idx) {
+  // 範囲外なら終了
+  if (idx >= QUESTIONS.length) { finishGame(); return; }
+
+  state.q = QUESTIONS[idx];
+
+  // 表示用
+  const chunks = Array.isArray(state.q.chunks) && state.q.chunks.length ? state.q.chunks : null;
+  const displayRomaji = chunks ? chunks.join(' ') : state.q.romaji;
+
+  // 判定用（空白・記号無視）
+  state.target  = displayRomaji.toLowerCase().replace(IGNORE_RE, '');
+  state.pointer = 0;
+
+  // UI 更新
+  buildRomajiLine(chunks ?? displayRomaji);
+  jpSentence.textContent = state.q.jp;
+  feedback.textContent = '';
+  feedback.className = 'feedback';
+}
 
   // ==== 開始 ====
   function startGame() {
-    state.q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
-
-    // 表示用：chunks があれば使用
-    const chunks = Array.isArray(state.q.chunks) && state.q.chunks.length ? state.q.chunks : null;
-    const displayRomaji = chunks ? chunks.join(' ') : state.q.romaji;
-
-    // 判定用：空白や記号は無視（従来どおり）
-    state.target = displayRomaji.toLowerCase().replace(IGNORE_RE, '');
-
-    // ローマ字行を描画（chunksがあれば“見た目スペース”つき）
-    buildRomajiLine(chunks ?? displayRomaji);
-
-    jpSentence.textContent = state.q.jp;
-
-    // タイマー開始（従来どおり）
+    // タイマー（セッション全体）開始
     state.startedAt = performance.now();
     state.timerId = setInterval(() => {
       const sec = (performance.now() - state.startedAt) / 1000;
       timerEl.textContent = sec.toFixed(1);
     }, 100);
 
-    overlay.setAttribute('hidden', 'true');
+    overlay.hidden = true;
     state.phase = 'playing';
+
+    state.questionIndex = 0;           // ★ 1問目
+    loadQuestionByIndex(state.questionIndex);
   }
 
   function buildRomajiLine(input) {
@@ -181,6 +224,11 @@
     showScreen('home');
     renderBest();
   });
+  
+  function abortToReady() {
+    resetGameView();   // 画面とカウンタを初期化（オーバーレイ再表示）
+    state.phase = 'ready';
+  }
 
   function onKeyDown(ev) {
     // スペースで開始（readyのみ）
@@ -189,6 +237,18 @@
       if (state.phase === 'ready') startGame();
       return;
     }
+    
+    // Esc：ready中はホームへ、playing中は中断してreadyへ
+    if (ev.key === 'Escape') {
+      ev.preventDefault();
+      if (state.phase === 'ready') {
+        showScreen('home');         // ← メイン画面へ戻す
+      } else if (state.phase === 'playing') {
+        abortToReady();             // ← 既に追加済みの中断関数
+      }
+      return;
+    }
+
     if (state.phase !== 'playing') return;
 
     const key = ev.key.length === 1 ? ev.key.toLowerCase() : '';
@@ -253,6 +313,134 @@
     //    まず開始判定: pointer がダブル子音先頭なら 'x'/'l' で促音開始
     if (maybeStartSokuon(key)) return;
 
+    // ===== Romaji Flex: Extra Pack (①wo/o ②ti/di⇄chi/ji ③fu⇄hu & j(a/u/o)⇄jy(a/u/o)) =====
+
+    // ① 「を」= 'wo' / 'o' 相互許容（targetが 'wo' のとき 'o' 1打で消化）
+    if (state.target.slice(state.pointer, state.pointer + 2) === 'wo' && key === 'o') {
+      accept(2, key);  // 'w' 'o' をまとめて消化
+      return;
+    }
+
+    // ③-1 'fu' ⇄ 'hu'（h/f の挿入・相互）
+    if (state.pointer >= 1) {
+      const prev = state.target[state.pointer - 1];
+      const cur = state.target[state.pointer];
+      // target: f u / 入力: h (中継キー)
+      if (prev === 'f' && cur === 'u' && key === 'h') {
+        state.correctKeys++; markNeutralHit(); return;
+      }
+      // target: h u / 入力: f (中継キー)
+      if (prev === 'h' && cur === 'u' && key === 'f') {
+        state.correctKeys++; markNeutralHit(); return;
+      }
+    }
+
+    // ③-2 'ja/ju/jo' ⇄ 'jya/jyu/jyo'（y 省略/挿入）＋ 'zya/zyu/zyo' も同様に許容
+    if (state.pointer >= 1) {
+      const prev = state.target[state.pointer - 1];
+      const cur = state.target[state.pointer];
+      const nxt = state.target[state.pointer + 1];
+      // target: j y (a/u/o) → 入力: j + (a/u/o) で 'y' をスキップ
+      if (prev === 'j' && cur === 'y' && (nxt === 'a' || nxt === 'u' || nxt === 'o') && key === nxt) {
+        accept(2, key); return;
+      }
+      // target: z y (a/u/o) → 入力: z + (a/u/o) で 'y' をスキップ
+      if (prev === 'z' && cur === 'y' && (nxt === 'a' || nxt === 'u' || nxt === 'o') && key === nxt) {
+        accept(2, key); return;
+      }
+      // 逆方向：target: j(a/u/o) のとき、入力 'y' を中継キーとして許容（次の母音で前進）
+      if (prev === 'j' && (cur === 'a' || cur === 'u' || cur === 'o') && key === 'y') {
+        state.correctKeys++; markNeutralHit(); return;
+      }
+      // 逆方向：target: z(a/u/o) のときも同様に 'y' を中継で許容
+      if (prev === 'z' && (cur === 'a' || cur === 'u' || cur === 'o') && key === 'y') {
+        state.correctKeys++; markNeutralHit(); return;
+      }
+    }
+
+    // ②-1 'ti' ⇄ 'chi'
+    // --- target: 'ti' を 'c' 'h' 'i' で入力する（段階管理）
+    if (state.target.slice(state.pointer, state.pointer + 2) === 'ti') {
+      // 開始：'c'
+      if (state.ti2chiStage === 0 && key === 'c') {
+        state.ti2chiStage = 1; state.ti2chiPtr = state.pointer;
+        state.correctKeys++; markNeutralHit(); return;
+      }
+      // 継続：'h'
+      if (state.ti2chiStage === 1 && state.ti2chiPtr === state.pointer && key === 'h') {
+        state.ti2chiStage = 2; state.correctKeys++; markNeutralHit(); return;
+      }
+      // 完了：'i' → 'ti' をまとめて消化
+      if (state.ti2chiStage === 2 && state.ti2chiPtr === state.pointer && key === 'i') {
+        accept(2, key); resetStage('ti2chi'); return;
+      }
+      // 想定外入力/位置ズレ
+      if (state.ti2chiStage && state.ti2chiPtr !== state.pointer) resetStage('ti2chi');
+    }
+    // --- target: 'chi' を 't' 'i' で入力する
+    if (state.target.slice(state.pointer, state.pointer + 3) === 'chi') {
+      // 開始：'t'
+      if (state.chi2tiStage === 0 && key === 't') {
+        state.chi2tiStage = 1; state.chi2tiPtr = state.pointer;
+        state.correctKeys++; markNeutralHit(); return;
+      }
+      // 完了：'i' → 'chi' をまとめて消化
+      if (state.chi2tiStage === 1 && state.chi2tiPtr === state.pointer && key === 'i') {
+        accept(3, key); resetStage('chi2ti'); return;
+      }
+      if (state.chi2tiStage && state.chi2tiPtr !== state.pointer) resetStage('chi2ti');
+    }
+
+    // ②-2 'di' ⇄ 'ji'
+    // --- target: 'di' を 'j' 'i' で入力
+    if (state.target.slice(state.pointer, state.pointer + 2) === 'di') {
+      if (state.di2jiStage === 0 && key === 'j') {
+        state.di2jiStage = 1; state.di2jiPtr = state.pointer;
+        state.correctKeys++; markNeutralHit(); return;
+      }
+      if (state.di2jiStage === 1 && state.di2jiPtr === state.pointer && key === 'i') {
+        accept(2, key); resetStage('di2ji'); return;
+      }
+      if (state.di2jiStage && state.di2jiPtr !== state.pointer) resetStage('di2ji');
+    }
+    // --- target: 'ji' を 'd' 'i' で入力
+    if (state.target.slice(state.pointer, state.pointer + 2) === 'ji') {
+      if (state.ji2diStage === 0 && key === 'd') {
+        state.ji2diStage = 1; state.ji2diPtr = state.pointer;
+        state.correctKeys++; markNeutralHit(); return;
+      }
+      if (state.ji2diStage === 1 && state.ji2diPtr === state.pointer && key === 'i') {
+        accept(2, key); resetStage('ji2di'); return;
+      }
+      if (state.ji2diStage && state.ji2diPtr !== state.pointer) resetStage('ji2di');
+    }
+
+    // ③-3 ltu/xtu の“相互許容”（1文字目 l/x の置換受理）
+    if (isLtuStart(state.pointer) && key === 'x') { accept(1, key); return; }
+    if (isXtuStart(state.pointer) && key === 'l') { accept(1, key); return; }
+
+    // A) target が 'si' のとき、キー 'h' を中継キーとして許容（= 'shi' 入力途中）
+    if (state.pointer >= 1) {
+      const prev = state.target[state.pointer - 1];
+      const cur = state.target[state.pointer];
+      if (prev === 's' && cur === 'i' && key === 'h') {
+        state.correctKeys++;   // 正答扱い（正答率が下がらないように）
+        markNeutralHit();      // 演出だけ
+        return;                // pointer は進めない（次の 'i' で前進）
+      }
+    }
+
+    // B) target が 'tu' のとき、キー 's' を中継キーとして許容（= 'tsu' 入力途中）
+    if (state.pointer >= 1) {
+      const prev = state.target[state.pointer - 1];
+      const cur = state.target[state.pointer];
+      if (prev === 't' && cur === 'u' && key === 's') {
+        state.correctKeys++;
+        markNeutralHit();
+        return;
+      }
+    }
+
     // 不一致
     showMiss();
   }
@@ -300,9 +488,7 @@
     }
     if (state.sokuonStage === 2) {
       if (key === 'u') {
-        state.correctKeys++;
         markNeutralHit();
-        // ここで「ダブル子音の1文字分を消化」
         accept(1, key);
         state.sokuonStage = 0; state.sokuonPtr = -1;
         return true;
@@ -325,7 +511,12 @@
     paintOkUntil(state.pointer);
 
     if (state.pointer >= state.target.length) {
-      finishGame();
+      state.questionIndex++;
+      if (state.questionIndex < QUESTIONS.length) {
+        loadQuestionByIndex(state.questionIndex); // 次の問題へ
+      } else {
+        finishGame(); // 全問終了
+      }
     } else {
       showHit();
     }
@@ -334,8 +525,11 @@
   function paintOkUntil(pointer) {
     const spans = romajiLine.children;
     for (let i = 0; i < spans.length; i++) {
-      spans[i].classList.toggle('ok', i < pointer);
-      if (i >= pointer) spans[i].classList.remove('ng');
+      const inOk = i < pointer;
+      spans[i].classList.toggle('ok', inOk);   // 正解領域=灰
+      if (inOk) spans[i].classList.remove('ng'); // ★ 正解になったら赤を必ず解除
+      else spans[i].classList.remove('ok');      // 未到達は初期（=黒）のまま
+      // ※ 未到達の 'ng'（現在位置の赤）は残す → 次の正解で上の if が外してくれる
     }
   }
 

@@ -300,7 +300,7 @@ body {
   min-height: 1.8rem;
   text-align: center;
   letter-spacing: .06em;
-  color: #9AA1AC;
+  color: #1F2937;
   /* base gray-400~500 */
   font-weight: 600;
   margin: .25rem 0 1rem;
@@ -380,6 +380,7 @@ body {
   border: 1px dashed rgba(220, 170, 91, .45);
   text-align: center;
   padding: 24px;
+  z-index: 10; /* game-boardよりも上に出すための処置 */
 }
 
 .start-overlay__title {
@@ -474,6 +475,9 @@ body {
 [data-screen][hidden] {
   display: none !important;
 }
+[hidden] {
+  display: none !important;
+}
 
 /* PC少し広め */
 @media (min-width:1200px) {
@@ -484,4 +488,14 @@ body {
   .game-board {
     min-height: 22rem;
   }
+}
+
+.screen--game {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.screen--game .game-board {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
