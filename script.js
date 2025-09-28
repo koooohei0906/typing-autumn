@@ -45,6 +45,14 @@
   let yakiimoImg;
   let typingEffectSeq = 0;        // 連番（ディレイ用）
 
+  // 共有用：このミニアプリのメイン画面URL（本番URLが決まったら書き換える）
+  const SHARE_URL = (location.origin && location.protocol !== 'file:')
+    ? (location.origin + location.pathname.replace(/\/[^/]*$/, '/'))
+    : 'https://example.com/typing-autumn/';
+
+  // Xの投稿作成URL
+  const X_INTENT_BASE = 'https://x.com/intent/tweet';
+
   // ★炎あたりの原点を計算
   function getEffectOrigin() {
     const layerBox = typingEffectsLayer?.getBoundingClientRect();
@@ -69,6 +77,7 @@
     correctKeys: 0,
     lastAcceptedChar: '',
     questionIndex: 0,  // 0..9 を順番に出す
+    lastResult: null, // { accuracy, timeSec } を保持
 
     // 促音（xtu/ltu）入力の進捗: 0=未開始, 1= 'x'/'l' 入力済, 2='t'まで入力済
     sokuonStage: 0,
@@ -100,6 +109,18 @@
     if (!restartNote) return;
     const onGame = screens?.game && !screens.game.hidden;
     restartNote.style.display = onGame ? '' : 'none';
+  }
+
+  // === X share helpers ===
+  function openInNewTab(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   // ==== 画面遷移 ====
@@ -266,8 +287,18 @@
         case 'goto-game': showScreen('game'); break;
         case 'back-home': showScreen('home'); break;
         case 'retry': showScreen('game'); break;
+        case 'share-x': shareLastResult(ev); break;
       }
     });
+
+    // 「結果をXで共有する」ボタン
+    const shareBtn = document.querySelector('[data-action="share-x"]');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        shareLastResult();
+      });
+    }
 
     // キー入力
     document.addEventListener('keydown', onKeyDown);
@@ -708,8 +739,15 @@
     const timeSec = Number(elapsed.toFixed(1));
     const accuracy = state.totalKeys > 0 ? Math.round((state.correctKeys / state.totalKeys) * 100) : 0;
 
+    // 直前スコアを保持
+    state.lastResult = { accuracy, timeSec };
+
     setResult(accuracy, timeSec);
-    maybeSaveBest(accuracy, timeSec);
+    maybeSaveBest(accuracy, timeSec); // ← 既存のまま利用してOK（共有とは無関係）
+
+    // 共有用に “直前スコア” を保持（ベスト更新フラグなどは不要）
+    state.lastResult = { accuracy, timeSec };
+
     showScreen('result');
   }
 
@@ -748,5 +786,41 @@
       localStorage.setItem('bestScore', JSON.stringify({ accuracy, timeSec, at: new Date().toISOString() }));
     }
     renderBest();
+  }
+
+  // 直前のスコアをXで共有
+  function shareLastResult(ev) {
+    if (ev) ev.preventDefault();
+
+    // 1) 共有テキストを作る（直前スコアが無ければDOMから拾うフォールバック）
+    let accuracyText, timeText;
+
+    if (state.lastResult) {
+      accuracyText = `${state.lastResult.accuracy}%`;
+      timeText = `${state.lastResult.timeSec.toFixed(1)}秒`;
+    } else {
+      accuracyText = (resultAccuracyEl?.textContent || '').trim();
+      timeText = (resultTimeEl?.textContent || '').trim();
+      if (!accuracyText || !timeText) {
+        alert('まだ共有できる結果がありません。まずはプレイして結果を出しましょう！');
+        return;
+      }
+    }
+
+    // 2) 文言の組み立て（インデントを混ぜないよう配列 + join）
+    const lines = [
+      '焼き芋焼けたよ！🍠',
+      '',
+      `🔥焼き上がり時間 ${timeText}`,
+      `✨完成度 ${accuracyText}`,
+      '',
+      `#タイピングの秋 ${SHARE_URL}`
+    ];
+    const text = lines.join('\n');
+
+    // 3) Xのintent URLを作って新規タブで開く（既存タブはそのまま）
+    const params = new URLSearchParams({ text });
+    const intentUrl = `${X_INTENT_BASE}?${params.toString()}`;
+    openInNewTab(intentUrl);
   }
 })();
