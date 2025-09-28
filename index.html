@@ -14,7 +14,7 @@
     <!-- =========================
          トップ画面
     ========================== -->
-    <section id="screen-home" class="screen screen--home" data-screen="home" aria-labelledby="home-title">
+    <section id="screen-home" class="screen--home" data-screen="home" aria-labelledby="home-title">
       <header class="home-header">
         <h1 id="home-title">タイピングの秋 🍁✍️</h1>
       </header>
@@ -26,13 +26,9 @@
         <!-- 👑 ベストスコア -->
         <div class="bestscore" aria-label="ベストスコア">
           <div class="bestscore__title" aria-hidden="true">👑 ベストスコア</div>
-          <div class="bestscore__row">
-            <span class="bestscore__label">完成度</span>
-            <strong id="best-accuracy" class="bestscore__value" data-field="bestAccuracy">--%</strong>
-          </div>
-          <div class="bestscore__row">
-            <span class="bestscore__label">焼き上がりにかかった時間</span>
-            <strong id="best-time" class="bestscore__value" data-field="bestTime">--秒</strong>
+          <div class="bestscore__value-line">
+            <strong id="best-accuracy" data-field="bestAccuracy">--%</strong>
+            <span class="bestscore__unit">完成度</span>
           </div>
         </div>
 
