@@ -245,7 +245,7 @@ body {
 .bestscore__title {
   font-weight: 400;
   color: var(--c-gold);
-  margin-bottom: .35rem;
+  margin-bottom: .5rem;
 }
 
 .bestscore__value-line {
