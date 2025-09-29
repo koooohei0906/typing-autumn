@@ -45,10 +45,8 @@
   let yakiimoImg;
   let typingEffectSeq = 0;        // 連番（ディレイ用）
 
-  // 共有用：このミニアプリのメイン画面URL（本番URLが決まったら書き換える）
-  const SHARE_URL = (location.origin && location.protocol !== 'file:')
-    ? (location.origin + location.pathname.replace(/\/[^/]*$/, '/'))
-    : 'https://example.com/typing-autumn/';
+  // 共有用：本番の固定URL（末尾スラッシュ付きに統一）
+  const SHARE_URL = 'https://koooohei0906.github.io/typing-autumn/';
 
   // Xの投稿作成URL
   const X_INTENT_BASE = 'https://x.com/intent/tweet';
@@ -896,12 +894,12 @@
       `🔥焼き上がり時間 ${timeText}`,
       `✨完成度 ${accuracyText}`,
       '',
-      `#タイピングの秋 ${SHARE_URL}`
+      '#タイピングの秋'
     ];
     const text = lines.join('\n');
 
     // 3) Xのintent URLを作って新規タブで開く（既存タブはそのまま）
-    const params = new URLSearchParams({ text });
+    const params = new URLSearchParams({ text, url: SHARE_URL });
     const intentUrl = `${X_INTENT_BASE}?${params.toString()}`;
     openInNewTab(intentUrl);
   }
