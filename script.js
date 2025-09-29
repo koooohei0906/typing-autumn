@@ -5,6 +5,20 @@
   const QUESTIONS = [
     { id: 1, jp: '芋', romaji: 'imo', chunks: ['imo'] },
     { id: 2, jp: '焼き芋', romaji: 'yakiimo', chunks: ['yakiimo'] },
+    {
+      id: 3, jp: '今日は焼き芋日和だね',
+      romaji: 'kyouhayakiimobiyoridane',
+      chunks: ['kyou', 'ha', 'yakiimo', 'biyori', 'dane']
+    },
+    {
+      id: 4, jp: '芋もぐもぐ山芋ごろごろ芋祭り',
+      romaji: 'imomogumoguyamaimogorogoroimomatsuri',
+      chunks: ['imo', 'mogumogu', 'yamaimo', 'gorogoro', 'imomaturi']
+    },
+    {
+      id: 5, jp: '焼き芋が出来上がりました', romaji: 'yakiimogadekiagarimasita',
+      chunks: ['yakiimo', 'ga', 'dekiagari', 'masita']
+    },
   ];
 
   // 記号・空白は無視
@@ -274,6 +288,7 @@
         case 'back-home': showScreen('home'); break;
         case 'retry': showScreen('game'); break;
         case 'share-x': shareLastResult(ev); break;
+        case 'reset-best': resetBestScore(); break;
       }
     });
 
@@ -661,6 +676,16 @@
     return false;
   }
 
+  function resetBestScore() {
+    const ok = confirm('ベストスコアをリセットしますか？\nこの操作は元に戻せません。');
+    if (!ok) return;
+    try {
+      localStorage.removeItem('bestScore');
+    } catch (_) { }
+    renderBest();  // メイン画面の表示を即更新（--% に戻る）
+    alert('ベストスコアをリセットしました。');
+  }
+
   // ==== 共通表示 ====
   function accept(advance, lastKey) {
     state.correctKeys++;
@@ -775,10 +800,10 @@
         showAt(elTitle, 0);     // 0.0s
         showAt(elAcc, 500);     // 0.5s
         showAt(elTime, 1000);     // 1.0s
-        showAt(elHito, 1500);     // 1.5s
-        showAt(elRetry, 2000);     // 2.0s 同時
-        showAt(elBack, 2000);     // 2.0s 同時
-        showAt(elShare, 2000);     // 2.0s 同時
+        showAt(elHito, 1500);     // 1.5s 同時
+        showAt(elRetry, 1500);     // 1.5s 同時
+        showAt(elBack, 1500);     // 1.5s 同時
+        showAt(elShare, 1500);     // 1.5s 同時
 
         // 後片付け（クラス解除と一時 visibility のリセット）
         setTimeout(() => {

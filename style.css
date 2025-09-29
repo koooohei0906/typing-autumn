@@ -33,6 +33,9 @@
 
   --container-w: 64rem;
   /* max-w-4xl ＝ 1024px  */
+
+  --c-gray-btn: #6E6E6E;
+    --c-gray-btn-hover: #595959;
 }
 
 /* ---- Reset ---- */
@@ -299,6 +302,39 @@ body {
   color: #7C6A4A;
   border: 1px solid rgba(220, 170, 91, .35);
   background: #FFF7EB;
+}
+
+.btn--secondary {
+  color: #fff;
+  background: var(--c-gray-btn);
+  box-shadow: 0 5px 10px rgba(55, 65, 81, .18);
+  font-size: 12px;
+  border-radius: 12px;
+  padding: 0.5rem 1.4rem;
+  transition: transform .15s ease, filter .15s ease;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo",
+    -apple-system, BlinkMacSystemFont, "San Francisco", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.btn--secondary:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.02);
+  background: var(--c-gray-btn-hover);
+}
+
+/* ホームのアクションを縦積みにして、両ボタンを同幅に */
+.screen--home .actions {
+  display: flex;
+  flex-direction: column;
+  /* ← 縦に並べる */
+  gap: .6rem;
+  justify-content: center;
+}
+
+.screen--home .actions .btn {
+  /* ← primary/secondary 両方に幅を適用 */
+  width: var(--home-block-w);
+  display: block;
 }
 
 /* ---- Game Header (左:モード、右:タイマー) ---- */
