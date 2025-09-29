@@ -737,31 +737,75 @@
       return;
     }
 
-    // 1) 白フェード開始
-    gameCard.classList.add('whiteout');
+    // 1) 白フェード開始（実DOMの白レイヤーを生成）
+    const white = document.createElement('div');
+    white.className = 'whiteout-layer';
+    gameCard.appendChild(white);
 
-    // 2) アニメ終了を待って遷移（フォールバックのタイマーも用意）
+    // 2) アニメ終了で結果表示へ（イベント＋保険）
     let done = false;
     const goResult = () => {
       if (done) return;
       done = true;
-      gameCard.classList.remove('whiteout'); // 念のため
-      showScreen('result');
-    };
 
-    // ★ カードの ::after に掛かっている whiteout アニメだけを拾う
-    const onAnimEnd = (e) => {
-      // 疑似要素のアニメで、しかも名前が 'whiteout' のときだけ
-      // （ブラウザにより e.pseudoElement が無い場合もあるので animationName で判定）
-      if (e.target === gameCard && e.animationName === 'whiteout') {
-        gameCard.removeEventListener('animationend', onAnimEnd);
-        goResult();
+      const resultEl = screens?.result || document.getElementById('screen-result');
+      const appRoot = document.getElementById('app');
+
+      // 結果カードを先に重ねて見せ、次フレームで game を隠す（カードが消える瞬間なし）
+      if (resultEl) {
+        resultEl.hidden = false;
+        resultEl.classList.add('is-layer');
+        resultEl.classList.add('enter-stagger-seq'); // 初期: 子要素は visibility:hidden（CSS側）
       }
+
+      // ---- 0.5秒刻み “ドン！（瞬間表示）” を JS で順次実行 ----
+      if (resultEl) {
+        // 対象要素の参照
+        const elTitle = resultEl.querySelector('.result-header');
+        const elAcc = resultEl.querySelector('.result-panel .result-row:nth-of-type(1)');
+        const elTime = resultEl.querySelector('.result-panel .result-row:nth-of-type(2)');
+        const elHito = resultEl.querySelector('.result-panel .result-row--hito');
+        const elRetry = resultEl.querySelector('#btn-retry');
+        const elBack = resultEl.querySelector('#btn-back-home');
+        const elShare = resultEl.querySelector('.result-share .btn');
+
+        const showAt = (el, ms) => { if (el) setTimeout(() => { el.style.visibility = 'visible'; }, ms); };
+
+        // 表示順：見出し → 完成度 → 時間 → ひとこと → もう一度 → トップ → 共有（各0.5s刻み）
+        showAt(elTitle, 0);     // 0.0s
+        showAt(elAcc, 500);     // 0.5s
+        showAt(elTime, 1000);     // 1.0s
+        showAt(elHito, 1500);     // 1.5s
+        showAt(elRetry, 2000);     // 2.0s 同時
+        showAt(elBack, 2000);     // 2.0s 同時
+        showAt(elShare, 2000);     // 2.0s 同時
+
+        // 後片付け（クラス解除と一時 visibility のリセット）
+        setTimeout(() => {
+          resultEl.classList.remove('enter-stagger-seq');
+          [elTitle, elAcc, elTime, elHito, elRetry, elBack, elShare].forEach(el => {
+            if (el) el.style.removeProperty('visibility');
+          });
+        }, 3400);
+      }
+      // -------------------------------------------------------------
+
+      // 次フレームで重ね解除＆ゲーム非表示
+      requestAnimationFrame(() => {
+        if (gameCard) gameCard.hidden = true;
+        if (resultEl) resultEl.classList.remove('is-layer');
+      });
+
+      // 片付け
+      appRoot?.classList.remove('whiteout');
+      if (white && white.parentNode) white.parentNode.removeChild(white);
     };
 
-    gameCard.addEventListener('animationend', onAnimEnd);
-    // 念のための保険（1.7秒後に必ず遷移）
-    setTimeout(goResult, 1700);
+    // 実DOM白レイヤーのアニメ完了を確実に拾う
+    white.addEventListener('animationend', goResult, { once: true });
+
+    // 1.5s + 0.2s = 1.7s → 念のための保険
+    setTimeout(goResult, 2000);
   }
 
   function setResult(accuracy, timeSec) {
