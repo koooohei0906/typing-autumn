@@ -5,20 +5,6 @@
   const QUESTIONS = [
     { id: 1, jp: '芋', romaji: 'imo', chunks: ['imo'] },
     { id: 2, jp: '焼き芋', romaji: 'yakiimo', chunks: ['yakiimo'] },
-    { 
-      id: 3, jp: '今日は焼き芋日和だね',
-      romaji: 'kyouhayakiimobiyoridane',
-      chunks: ['kyou', 'ha', 'yakiimo', 'biyori', 'dane']
-    },
-    {
-      id: 4, jp: '芋もぐもぐ山芋ごろごろ芋祭り',
-      romaji: 'imomogumoguyamaimogorogoroimomatsuri',
-      chunks: ['imo', 'mogumogu', 'yamaimo', 'gorogoro', 'imomaturi']
-    },
-    {
-      id: 5, jp: '焼き芋が出来上がりました', romaji: 'yakiimogadekiagarimasita',
-      chunks: ['yakiimo', 'ga', 'dekiagari', 'masita']
-    },
   ];
 
   // 記号・空白は無視
@@ -739,16 +725,43 @@
     const timeSec = Number(elapsed.toFixed(1));
     const accuracy = state.totalKeys > 0 ? Math.round((state.correctKeys / state.totalKeys) * 100) : 0;
 
-    // 直前スコアを保持
+    // 直前スコアを保持＆結果DOMを更新
     state.lastResult = { accuracy, timeSec };
-
     setResult(accuracy, timeSec);
-    maybeSaveBest(accuracy, timeSec); // ← 既存のまま利用してOK（共有とは無関係）
+    maybeSaveBest(accuracy, timeSec);
 
-    // 共有用に “直前スコア” を保持（ベスト更新フラグなどは不要）
-    state.lastResult = { accuracy, timeSec };
+    // ★ ゲームカードだけ白フェードしてから結果画面へ
+    const gameCard = screens?.game; // <section id="screen-game" ...>
+    if (!gameCard) {
+      showScreen('result');
+      return;
+    }
 
-    showScreen('result');
+    // 1) 白フェード開始
+    gameCard.classList.add('whiteout');
+
+    // 2) アニメ終了を待って遷移（フォールバックのタイマーも用意）
+    let done = false;
+    const goResult = () => {
+      if (done) return;
+      done = true;
+      gameCard.classList.remove('whiteout'); // 念のため
+      showScreen('result');
+    };
+
+    // ★ カードの ::after に掛かっている whiteout アニメだけを拾う
+    const onAnimEnd = (e) => {
+      // 疑似要素のアニメで、しかも名前が 'whiteout' のときだけ
+      // （ブラウザにより e.pseudoElement が無い場合もあるので animationName で判定）
+      if (e.target === gameCard && e.animationName === 'whiteout') {
+        gameCard.removeEventListener('animationend', onAnimEnd);
+        goResult();
+      }
+    };
+
+    gameCard.addEventListener('animationend', onAnimEnd);
+    // 念のための保険（1.7秒後に必ず遷移）
+    setTimeout(goResult, 1700);
   }
 
   function setResult(accuracy, timeSec) {

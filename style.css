@@ -759,3 +759,48 @@ display: inline-block;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* =========================
+   Game → Result の白フェード
+   カード（.screen--game）だけをサッと白で覆う
+========================= */
+/* 白オーバーレイ（内容物の上に乗る） */
+/* ▼ カード内だけ白飛び（枠=borderは残すためinset:2px） */
+.screen--game.whiteout::after {
+  content: "";
+  position: absolute;
+  inset: 2px; /* 枠(2px)の内側だけ覆う */
+  border-radius: calc(var(--card-radius-xl) - 2px);
+  background: #fff;
+  animation: whiteout 1.5s ease-out forwards; /* 1.5秒で真っ白へ */
+  animation-delay: .2s;
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* ▼ 装飾円は白飛び中に消す（任意） */
+.screen--game.whiteout::before {
+  opacity: 0 !important;
+}
+
+/* ▼ 中身も同時に薄くして“白く飛ぶ”感じを明確にする */
+.screen--game.whiteout > * {
+  opacity: 0;
+  transition: opacity 1.0s ease .2s; /* ←第3引数がdelay：0.2秒 */
+}
+
+/* ▼ 普段は不透明に（初期状態定義） */
+.screen--game > * {
+  opacity: 1;
+  transition: opacity 0.2s linear; /* 既にあれば不要 */
+}
+
+@keyframes whiteout {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
