@@ -1,4 +1,4 @@
-# タイピングの秋 🍁✍️
+# タイピングの秋 🍁✍️（現在公開停止中です）
 
 ## URL
 https://koooohei0906.github.io/typing-autumn/
